@@ -3,6 +3,7 @@
 const Assert = require('assert');
 const Fs = require('fs-extra');
 const Path = require('path');
+const Pretty = require('pretty');
 const Puppeteer = require('puppeteer');
 
 let browser;
@@ -101,6 +102,34 @@ internals.wrapPage = function (page) {
     wrapped.pause = (ms = 1000) => {
 
         return Promise.race([pageErrorPromise, internals.pause(ms)]);
+    };
+
+    wrapped.mustExist = async (selector) => {
+
+        const element = await page.$(selector);
+        Assert.ok(element, `${selector} must exist`);
+        return element;
+    };
+
+    wrapped.outerHTML = async (selector) => {
+
+        const element = await page.$(selector);
+        return page.evaluate((el) => el.outerHTML, element);
+    };
+
+    wrapped.innerHTML = async (selector) => {
+
+        const element = await page.$(selector);
+        return page.evaluate((el) => el.innerHTML, element);
+    };
+
+    wrapped.mustNotExist = async (selector, selectorToShow) => {
+
+        const element = await page.$(selector);
+        if (element) {
+            const html = await outerHTML(page, selectorToShow || selector);
+            Assert.fail(`${pretty(html)} should not exist (${selector})`);
+        }
     };
 
     return wrapped;
