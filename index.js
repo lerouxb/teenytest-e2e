@@ -1,8 +1,11 @@
 'use strict';
 
 const Assert = require('assert');
+const Fs = require('fs-extra');
+const Path = require('path');
 const Puppeteer = require('puppeteer');
 
+let browser;
 
 const internals = {
     // Only wrap (and expose) some of puppeteer's page methods so that there is still a chance to port it to Firefox or IE.
@@ -103,8 +106,18 @@ internals.wrapPage = function (page) {
     return wrapped;
 };
 
+internals.screenshot = async function (path) {
 
-let browser;
+    const pages = await browser.pages();
+
+    // TODO: for now we just take the first page after the blank one
+    for (const page of pages.slice(1)) {
+        Fs.mkdirpSync(Path.dirname(path));
+        await page.screenshot({ path });
+        break;
+    }
+};
+
 
 exports.beforeAll = async function () {
 
@@ -139,3 +152,23 @@ exports.afterAll = async function () {
     await browser.close();
 };
 
+
+exports.name = 'teenytest-e2e';
+
+exports.reporters = {
+    test: function (runTest, metadata, cb) {
+
+        runTest(function (err, result) {
+
+            if (!result.passing) {
+                const dirname = process.env.SCREENSHOT_DIR || 'screenshots';
+                const filename = `${metadata.name}.png`;
+                const path = Path.join(dirname, filename);
+                console.log(`Writing screenshot to "${path}".`);
+                internals.screenshot(path).then(() => cb(err, result));
+                return;
+            }
+            cb(err, result);
+        });
+    }
+};

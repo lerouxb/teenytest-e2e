@@ -10,6 +10,8 @@ In your teenytest helper, call teenytest-e2e's beforeAll from beforeAll, afterEa
 * afterEach will close any pages you created with newPage()
 * afterAll closes the browser
 
+If you want to take screenshots when tests fail, then also register teenytest-e2e as a teenytest plugin in your package.json. By default screenshots will be stored in a directory called `screenshots`. This can be configured by setting the environment variable `SCREENSHOT_DIR`.
+
 global.newPage() creates a new wrapped page that has internals.methods wrapped and exposed. It only wraps a whitelist of methods to keep the API lean so other browsers can hopefully be supported in future.
 
 ## Killer features
